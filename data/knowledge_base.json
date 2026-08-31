@@ -1,0 +1,34 @@
+{
+  "schemes": [
+    {
+      "id": "RAJ_SCH_01",
+      "name": "Mukhyamantri Uchha Shiksha Chhatravriti Yojana",
+      "state": "Rajasthan",
+      "target_group": "Undergraduate College Students",
+      "eligibility": "Minimum 60% marks in Class 12 board exams, family annual income below INR 2.5 Lakhs.",
+      "benefits": "INR 500 per month (up to INR 5,000 annually) for up to 5 years.",
+      "application_portal": "https://hte.rajasthan.gov.in or SSO Rajasthan Portal",
+      "required_documents": ["[Aadhaar Redacted] / Jan Aadhaar Card", "Class 12 Marksheet", "Income Certificate", "Bank Passbook"]
+    },
+    {
+      "id": "RAJ_SCH_02",
+      "name": "Devnarayan Chhatra Scooty Vitran Evam Protsahan Rashi Yojana",
+      "state": "Rajasthan",
+      "target_group": "Girl students from backward classes (MBC)",
+      "eligibility": "Girls passing Class 12 with at least 50% marks enrolled in state degree colleges.",
+      "benefits": "Free motorized scooty or annual incentive payment up to graduation/post-graduation.",
+      "application_portal": "SSO Rajasthan Portal",
+      "required_documents": ["Jan Aadhaar Card", "Caste Certificate", "Class 12 Certificate", "College Fee Receipt"]
+    },
+    {
+      "id": "RAJ_SCH_03",
+      "name": "Rajasthan Free Tablet Yojana (Shiksha Vibhag)",
+      "state": "Rajasthan",
+      "target_group": "Meritorious Class 8, 10, and 12 Students",
+      "eligibility": "Top merit rank holders in Rajasthan Board of Secondary Education (RBSE).",
+      "benefits": "Free Smart Tablet with 3 years of complimentary internet connectivity.",
+      "application_portal": "Direct departmental allocation via school headmaster/principal.",
+      "required_documents": ["School ID", "RBSE Board Roll Number", "Jan Aadhaar Card"]
+    }
+  ]
+}
