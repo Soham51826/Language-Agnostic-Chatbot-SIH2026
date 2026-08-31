@@ -14,7 +14,7 @@
       "id": "RAJ_SCH_02",
       "name": "Devnarayan Chhatra Scooty Vitran Evam Protsahan Rashi Yojana",
       "state": "Rajasthan",
-      "target_group": "Girl students from backward classes (MBC)",
+      "target_group": "Girl students from Most Backward Classes (MBC)",
       "eligibility": "Girls passing Class 12 with at least 50% marks enrolled in state degree colleges.",
       "benefits": "Free motorized scooty or annual incentive payment up to graduation/post-graduation.",
       "application_portal": "SSO Rajasthan Portal",
@@ -29,6 +29,36 @@
       "benefits": "Free Smart Tablet with 3 years of complimentary internet connectivity.",
       "application_portal": "Direct departmental allocation via school headmaster/principal.",
       "required_documents": ["School ID", "RBSE Board Roll Number", "Jan Aadhaar Card"]
+    },
+    {
+      "id": "RAJ_SCH_04",
+      "name": "Mukhyamantri Anuprati Coaching Yojana",
+      "state": "Rajasthan",
+      "target_group": "Competitive exam aspirants (UPSC, RPSC, REET, NEET, JEE)",
+      "eligibility": "Annual family income under INR 8 Lakhs, domicile of Rajasthan.",
+      "benefits": "100% free professional coaching at reputed empanelled institutes plus INR 40,000 annual residential allowance for outstation candidates.",
+      "application_portal": "SSO Rajasthan (SJE Portal)",
+      "required_documents": ["Caste Certificate", "Income Certificate", "Jan Aadhaar Card", "Class 10/12 Marksheets"]
+    },
+    {
+      "id": "RAJ_SCH_05",
+      "name": "Gargi Puraskar Yojana",
+      "state": "Rajasthan",
+      "target_group": "Meritorious Class 10 and 12 Girl Students",
+      "eligibility": "Girls securing 75% or higher in RBSE board examinations continuing further studies.",
+      "benefits": "Financial incentive of INR 3,000 to INR 5,000 along with a Certificate of Merit on Basant Panchami.",
+      "application_portal": "Shala Darpan Portal (rajshaladarpan.nic.in)",
+      "required_documents": ["Jan Aadhaar Card", "RBSE Marksheet", "Bank Passbook", "Current School/College Study Certificate"]
+    },
+    {
+      "id": "RAJ_SCH_06",
+      "name": "RTE Rajasthan Free Private School Admission",
+      "state": "Rajasthan",
+      "target_group": "Children from Economically Weaker Sections (EWS)",
+      "eligibility": "Family annual income below INR 2.5 Lakhs; child entering pre-primary or Class 1.",
+      "benefits": "25% mandatory reserved quota for free elementary education in private recognized schools from Class 1 to Class 8.",
+      "application_portal": "rajpsp.nic.in (Private School Portal)",
+      "required_documents": ["Child Birth Certificate", "Income Certificate", "Domicile Certificate", "Jan Aadhaar Card"]
     }
   ]
 }

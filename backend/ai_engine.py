@@ -1,5 +1,6 @@
 import os
 import json
+from typing import List, Dict, Generator
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
@@ -11,7 +12,7 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 class ConversationalAIEngine:
     def __init__(self, knowledge_base_path: str = "data/knowledge_base.json"):
         if not GEMINI_API_KEY or GEMINI_API_KEY == "your_actual_gemini_api_key_here":
-            raise ValueError("GEMINI_API_KEY is not set. Please add your key to backend/.env")
+            raise ValueError("GEMINI_API_KEY is not set. Please update backend/.env")
         
         self.client = genai.Client(api_key=GEMINI_API_KEY)
         self.model_name = "gemini-2.5-flash"
@@ -28,33 +29,44 @@ class ConversationalAIEngine:
     def _build_system_instruction(self) -> str:
         return f"""
 You are 'VaniSetu', an intelligent educational and government schemes assistant for Rajasthan public education.
-Your goal is to assist students, parents, and rural citizens navigating complex scholarships, admissions, and rules.
+Your goal is to assist students, parents, and rural citizens navigating complex scholarships, admissions, and educational rules.
 
 STRICT CONSTRAINTS & BEHAVIOR:
 1. Ground your answers strictly on this knowledge base:
 {self.knowledge_base}
-2. Supported regional output languages:
+2. Language Support:
    - 'hi': Hindi (Devanagari script)
    - 'mr': Marathi (Devanagari script)
    - 'gu': Gujarati (Gujarati script)
    - 'en': English
-3. The user may submit queries in voice-transcribed scripts, formal regional languages, or colloquial romanized forms (Hinglish/Marathlish).
-4. Always answer clearly and concisely in the requested target language.
-5. If the requested information is not present in the verified schemes list, politely advise the user to check their local District Education Office or 'hte.rajasthan.gov.in' rather than guessing.
-6. Provide structured bullet points with eligibility, documents required, and deadlines so speech synthesizers can narrate smoothly.
+   - 'auto': Automatically detect the user's input language/script.
+3. Romanized Script Handling:
+   - If the user types in colloquial Romanized text (e.g., Hinglish like 'mujhe scholarship chahiye', Marathlish, or Gujlish), reply in the native regional script (Devanagari/Gujarati) followed by a short simplified Romanized explanation.
+4. Hallucination Prevention:
+   - If the requested scheme or information is not present in the verified knowledge base, do not guess or fabricate information. Politely direct the user to their local District Education Office or official portal 'hte.rajasthan.gov.in'.
+5. Formatting:
+   - Always structure responses with clean bullet points for eligibility, benefits, and required documents so Text-to-Speech (TTS) synthesizers can narrate cleanly.
 """
 
-    async def generate_chat_response(self, user_query: str, target_lang: str = "hi", history: list = None) -> str:
+    def _format_contents(self, user_query: str, target_lang: str, history: List[Dict[str, str]] = None) -> list:
+        contents = []
+        if history:
+            for turn in history:
+                role = "user" if turn.get("role") == "user" else "model"
+                text = turn.get("parts", [""])[0] if isinstance(turn.get("parts"), list) else str(turn.get("parts", ""))
+                contents.append(types.Content(role=role, parts=[types.Part.from_text(text=text)]))
+
+        query_instruction = f"Target Language: {target_lang}\nUser Query: {user_query}\nAnswer directly in the requested language."
+        contents.append(types.Content(role="user", parts=[types.Part.from_text(text=query_instruction)]))
+        return contents
+
+    async def generate_chat_response(self, user_query: str, target_lang: str = "hi", history: List[Dict[str, str]] = None) -> str:
         system_instruction = self._build_system_instruction()
-        prompt = f"""
-Target Language: {target_lang}
-User Query: {user_query}
+        contents = self._format_contents(user_query, target_lang, history)
 
-Respond directly to the user in the target language specified. Ensure the tone is clear, accessible, and supportive.
-"""
         response = self.client.models.generate_content(
             model=self.model_name,
-            contents=prompt,
+            contents=contents,
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
                 temperature=0.3,
@@ -62,13 +74,13 @@ Respond directly to the user in the target language specified. Ensure the tone i
         )
         return response.text
 
-    def generate_chat_response_stream(self, user_query: str, target_lang: str = "hi", history: list = None):
+    def generate_chat_response_stream(self, user_query: str, target_lang: str = "hi", history: List[Dict[str, str]] = None) -> Generator:
         system_instruction = self._build_system_instruction()
-        prompt = f"Target Language: {target_lang}\nUser Query: {user_query}\n"
-        
+        contents = self._format_contents(user_query, target_lang, history)
+
         return self.client.models.generate_content_stream(
             model=self.model_name,
-            contents=prompt,
+            contents=contents,
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
                 temperature=0.3,
