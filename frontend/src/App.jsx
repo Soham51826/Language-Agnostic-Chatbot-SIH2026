@@ -10,7 +10,7 @@ export default function App() {
   ]);
   const [inputQuery, setInputQuery] = useState('');
   const [selectedLang, setSelectedLang] = useState(DEFAULT_LANGUAGE);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
   const [ttsEnabled, setTtsEnabled] = useState(true);
   const messagesEndRef = useRef(null);
 
@@ -20,20 +20,30 @@ export default function App() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, isLoading]);
+  }, [messages, isStreaming]);
 
   const activeLangConfig = SUPPORTED_LANGUAGES.find(l => l.code === selectedLang) || SUPPORTED_LANGUAGES[0];
 
-  const handleSendMessage = async (queryText) => {
-    const textToSend = queryText || inputQuery;
-    if (!textToSend.trim() || isLoading) return;
+  // SSE Streaming Handler with Progressive Audio Narration
+  const handleSendMessageStream = async (queryText) => {
+    const textToSend = (queryText || inputQuery).trim();
+    if (!textToSend || isStreaming) return;
 
-    setMessages(prev => [...prev, { role: 'user', text: textToSend }]);
+    stopSpeech();
     setInputQuery('');
-    setIsLoading(true);
+    setIsStreaming(true);
+
+    // Append user turn and initialize empty model bubble
+    setMessages(prev => [
+      ...prev,
+      { role: 'user', text: textToSend },
+      { role: 'assistant', text: '' }
+    ]);
+
+    let accumulatedText = '';
 
     try {
-      const response = await fetch('http://localhost:8000/api/chat', {
+      const response = await fetch('http://localhost:8000/api/chat/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -43,22 +53,62 @@ export default function App() {
         })
       });
 
-      if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
-      const data = await response.json();
+      if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
 
-      setMessages(prev => [...prev, { role: 'assistant', text: data.response_text }]);
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let buffer = '';
 
-      if (ttsEnabled) {
-        speakText(data.response_text, selectedLang);
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n\n');
+        buffer = lines.pop(); // Keep partial chunks in buffer
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const dataStr = line.replace('data: ', '').trim();
+
+            if (dataStr === '[DONE]') {
+              if (ttsEnabled && accumulatedText) {
+                speakText(accumulatedText, selectedLang);
+              }
+              break;
+            }
+
+            try {
+              const parsed = JSON.parse(dataStr);
+              if (parsed.delta) {
+                accumulatedText += parsed.delta;
+                setMessages(prev => {
+                  const updated = [...prev];
+                  updated[updated.length - 1] = {
+                    role: 'assistant',
+                    text: accumulatedText
+                  };
+                  return updated;
+                });
+              }
+            } catch (err) {
+              console.error('SSE JSON parse error:', err);
+            }
+          }
+        }
       }
     } catch (err) {
-      console.error(err);
-      setMessages(prev => [
-        ...prev, 
-        { role: 'assistant', text: '⚠️ सर्वर से कनेक्ट करने में असमर्थ। कृपया सुनिश्चित करें कि FastAPI बैकएंड चल रहा है।' }
-      ]);
+      console.error('Streaming request failed:', err);
+      setMessages(prev => {
+        const updated = [...prev];
+        updated[updated.length - 1] = {
+          role: 'assistant',
+          text: '⚠️ सर्वर से कनेक्ट करने में त्रुटि। कृपया सुनिश्चित करें कि FastAPI बैकएंड चल रहा है।'
+        };
+        return updated;
+      });
     } finally {
-      setIsLoading(false);
+      setIsStreaming(false);
     }
   };
 
@@ -66,7 +116,7 @@ export default function App() {
     selectedLang,
     (spokenTranscript) => {
       setInputQuery(spokenTranscript);
-      handleSendMessage(spokenTranscript);
+      handleSendMessageStream(spokenTranscript);
     }
   );
 
@@ -106,8 +156,12 @@ export default function App() {
         {messages.map((m, idx) => (
           <div key={idx} className={`message-row ${m.role}`}>
             <div className="message-bubble">
-              <div className="message-content">{m.text}</div>
-              {m.role === 'assistant' && (
+              <div className="message-content">
+                {m.text || (isStreaming && idx === messages.length - 1 ? (
+                  <span className="cursor-blink">▍</span>
+                ) : '')}
+              </div>
+              {m.role === 'assistant' && m.text && (
                 <button 
                   className="replay-speech-btn"
                   onClick={() => speakText(m.text, selectedLang)}
@@ -119,13 +173,9 @@ export default function App() {
             </div>
           </div>
         ))}
-        {isLoading && (
-          <div className="message-row assistant">
-            <div className="message-bubble loading">
-              <span className="dot"></span>
-              <span className="dot"></span>
-              <span className="dot"></span>
-            </div>
+        {isStreaming && (
+          <div className="streaming-indicator">
+            <span>Generating response...</span>
           </div>
         )}
         <div ref={messagesEndRef} />
@@ -145,15 +195,15 @@ export default function App() {
           placeholder={isListening ? "Listening to your voice..." : "योजना या छात्रवृत्ति के बारे में पूछें..."}
           value={inputQuery}
           onChange={(e) => setInputQuery(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+          onKeyDown={(e) => e.key === 'Enter' && handleSendMessageStream()}
         />
 
         <button 
           className="send-btn" 
-          onClick={() => handleSendMessage()}
-          disabled={isLoading || !inputQuery.trim()}
+          onClick={() => handleSendMessageStream()}
+          disabled={isStreaming || !inputQuery.trim()}
         >
-          Send
+          {isStreaming ? 'Streaming...' : 'Send'}
         </button>
       </footer>
     </div>
