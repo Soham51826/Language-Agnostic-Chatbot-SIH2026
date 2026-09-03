@@ -1,6 +1,6 @@
 let voices = [];
+let activeUtterance = null;
 
-// Populate browser voices cache
 const loadVoices = () => {
   if ('speechSynthesis' in window) {
     voices = window.speechSynthesis.getVoices();
@@ -12,30 +12,66 @@ if ('speechSynthesis' in window && window.speechSynthesis.onvoiceschanged !== un
   window.speechSynthesis.onvoiceschanged = loadVoices;
 }
 
-// Find best matching voice for Indic languages (prioritizing Google/Microsoft native packs)
 const getBestVoice = (langCode) => {
   if (!voices.length) loadVoices();
   const shortCode = langCode.split('-')[0];
 
-  return (
-    voices.find(v => v.lang === langCode && (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('India'))) ||
-    voices.find(v => v.lang.startsWith(shortCode)) ||
-    null
+  const premiumMatch = voices.find(
+    v => v.lang === langCode && (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('India'))
   );
+  if (premiumMatch) return premiumMatch;
+
+  const exactMatch = voices.find(v => v.lang === langCode || v.lang.replace('_', '-') === langCode);
+  if (exactMatch) return exactMatch;
+
+  const baseMatch = voices.find(v => v.lang.startsWith(shortCode));
+  if (baseMatch) return baseMatch;
+
+  if (shortCode === 'gu') {
+    const hindiFallback = voices.find(v => v.lang.startsWith('hi') || v.name.includes('Hindi'));
+    if (hindiFallback) return hindiFallback;
+  }
+
+  return voices.find(v => v.lang === 'en-IN') || voices[0] || null;
+};
+
+// Immediate hard stop function
+export const stopSpeech = () => {
+  if (!('speechSynthesis' in window)) return;
+
+  try {
+    // 1. Unbind active callbacks to prevent delayed triggers
+    if (activeUtterance) {
+      activeUtterance.onend = null;
+      activeUtterance.onerror = null;
+      activeUtterance = null;
+    }
+
+    // 2. Clear paused lock and cancel speech queue
+    window.speechSynthesis.pause();
+    window.speechSynthesis.cancel();
+    
+    // 3. Chromium engine unfreeze hack
+    if (window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
+    }
+  } catch (err) {
+    console.error('Failed to stop speech:', err);
+  }
 };
 
 export const speakText = (text, lang = 'hi-IN') => {
   if (!('speechSynthesis' in window)) return;
 
-  window.speechSynthesis.cancel();
+  // Stop any ongoing voice completely before starting
+  stopSpeech();
 
-  // Strip Markdown markers so synthesizer doesn't pronounce asterisks
-  const cleanText = text.replace(/[*#_`]/g, '').trim();
+  const cleanText = text.replace(/[*#_`~>]/g, '').trim();
   if (!cleanText) return;
 
   const utterance = new SpeechSynthesisUtterance(cleanText);
   utterance.lang = lang;
-  utterance.rate = 0.95; // Natural cadence for clarity
+  utterance.rate = 0.92;
   utterance.pitch = 1.0;
 
   const matchedVoice = getBestVoice(lang);
@@ -43,11 +79,21 @@ export const speakText = (text, lang = 'hi-IN') => {
     utterance.voice = matchedVoice;
   }
 
-  window.speechSynthesis.speak(utterance);
-};
+  utterance.onend = () => {
+    activeUtterance = null;
+  };
 
-export const stopSpeech = () => {
-  if ('speechSynthesis' in window) {
-    window.speechSynthesis.cancel();
+  utterance.onerror = (e) => {
+    console.warn('Utterance stopped or errored:', e);
+    activeUtterance = null;
+  };
+
+  activeUtterance = utterance;
+
+  // Unpause if stuck and speak
+  if (window.speechSynthesis.paused) {
+    window.speechSynthesis.resume();
   }
+  
+  window.speechSynthesis.speak(utterance);
 };

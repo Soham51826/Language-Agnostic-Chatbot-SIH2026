@@ -4,36 +4,39 @@ import { useSpeechRecognition } from './audio/useSpeechRecognition';
 import { speakText, stopSpeech } from './audio/speechSynthesis';
 import './App.css';
 
+const INTERACTION_MODES = [
+  { id: 'T2T', label: '📝 Text → Text', input: 'text', output: 'text' },
+  { id: 'S2S', label: '🎙️ Speech → Speech', input: 'voice', output: 'voice' },
+  { id: 'T2S', label: '⌨️ Text → Speech', input: 'text', output: 'voice' },
+  { id: 'S2T', label: '🗣️ Speech → Text', input: 'voice', output: 'text' },
+];
+
 export default function App() {
+  const [activeMode, setActiveMode] = useState('S2S');
+  const [selectedLang, setSelectedLang] = useState(DEFAULT_LANGUAGE);
   const [messages, setMessages] = useState([
     { role: 'assistant', text: 'नमस्ते! मैं वाणीसेतु हूँ। राजस्थान छात्रवृत्ति एवं प्रवेश योजनाओं के बारे में पूछें।' }
   ]);
   const [inputQuery, setInputQuery] = useState('');
-  const [selectedLang, setSelectedLang] = useState(DEFAULT_LANGUAGE);
   const [isStreaming, setIsStreaming] = useState(false);
-  const [ttsEnabled, setTtsEnabled] = useState(true);
   const messagesEndRef = useRef(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, isStreaming]);
-
+  const currentMode = INTERACTION_MODES.find(m => m.id === activeMode) || INTERACTION_MODES[0];
   const activeLangConfig = SUPPORTED_LANGUAGES.find(l => l.code === selectedLang) || SUPPORTED_LANGUAGES[0];
 
-  // SSE Streaming Handler with Progressive Audio Narration
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isStreaming]);
+
+  // Core streaming query handler with mode-aware audio execution
   const handleSendMessageStream = async (queryText) => {
-    const textToSend = (queryText || inputQuery).trim();
+    const textToSend = (queryText !== undefined && queryText !== null ? queryText : inputQuery).trim();
     if (!textToSend || isStreaming) return;
 
     stopSpeech();
     setInputQuery('');
     setIsStreaming(true);
 
-    // Append user turn and initialize empty model bubble
     setMessages(prev => [
       ...prev,
       { role: 'user', text: textToSend },
@@ -49,11 +52,12 @@ export default function App() {
         body: JSON.stringify({
           query: textToSend,
           language: activeLangConfig.apiCode,
-          session_id: 'unified_web_session'
+          session_id: 'unified_vanisetu_session',
+          mode: activeMode
         })
       });
 
-      if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder('utf-8');
@@ -65,14 +69,15 @@ export default function App() {
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n\n');
-        buffer = lines.pop(); // Keep partial chunks in buffer
+        buffer = lines.pop();
 
         for (const line of lines) {
           if (line.startsWith('data: ')) {
             const dataStr = line.replace('data: ', '').trim();
 
             if (dataStr === '[DONE]') {
-              if (ttsEnabled && accumulatedText) {
+              // Trigger TTS speech only if current mode specifies voice output
+              if (currentMode.output === 'voice' && accumulatedText) {
                 speakText(accumulatedText, selectedLang);
               }
               break;
@@ -91,19 +96,19 @@ export default function App() {
                   return updated;
                 });
               }
-            } catch (err) {
-              console.error('SSE JSON parse error:', err);
+            } catch (e) {
+              console.error('Failed to parse stream packet:', e);
             }
           }
         }
       }
     } catch (err) {
-      console.error('Streaming request failed:', err);
+      console.error('SSE connection error:', err);
       setMessages(prev => {
         const updated = [...prev];
         updated[updated.length - 1] = {
           role: 'assistant',
-          text: '⚠️ सर्वर से कनेक्ट करने में त्रुटि। कृपया सुनिश्चित करें कि FastAPI बैकएंड चल रहा है।'
+          text: '⚠️ सर्वर से कनेक्ट करने में असमर्थ। कृपया सुनिश्चित करें कि FastAPI चल रहा है।'
         };
         return updated;
       });
@@ -112,100 +117,143 @@ export default function App() {
     }
   };
 
-  const { isListening, startListening, stopListening } = useSpeechRecognition(
+  // Connect microphone voice recognition
+  const { isListening, transcript, startListening, stopListening } = useSpeechRecognition(
     selectedLang,
     (spokenTranscript) => {
-      setInputQuery(spokenTranscript);
-      handleSendMessageStream(spokenTranscript);
+      if (spokenTranscript && spokenTranscript.trim()) {
+        setInputQuery(spokenTranscript);
+        handleSendMessageStream(spokenTranscript.trim());
+      }
     }
   );
 
   return (
-    <div className="chat-container">
-      <header className="chat-header">
-        <div className="header-brand">
-          <h2>वाणीसेतु (VaniSetu)</h2>
-          <span className="badge">SIH 2026</span>
-        </div>
-        <div className="header-controls">
-          <select 
-            value={selectedLang} 
-            onChange={(e) => {
-              stopSpeech();
-              setSelectedLang(e.target.value);
-            }}
-          >
-            {SUPPORTED_LANGUAGES.map(lang => (
-              <option key={lang.code} value={lang.code}>{lang.label}</option>
+    <div className="app-wrapper">
+      <div className="chat-card">
+        {/* Top Header */}
+        <header className="app-header">
+          <div className="brand-section">
+            <h1>वाणीसेतु (VaniSetu)</h1>
+            <span className="sih-badge">SIH 2026</span>
+          </div>
+          <div className="header-actions">
+            <select 
+              className="lang-dropdown"
+              value={selectedLang} 
+              onChange={(e) => {
+                stopSpeech();
+                setSelectedLang(e.target.value);
+              }}
+            >
+              {SUPPORTED_LANGUAGES.map(lang => (
+                <option key={lang.code} value={lang.code}>{lang.label}</option>
+              ))}
+            </select>
+            <button 
+              type="button" 
+              className="stop-audio-btn" 
+              onClick={stopSpeech}
+              title="Stop Audio Playback"
+            >
+              ⏹️ Stop Audio
+            </button>
+          </div>
+        </header>
+
+        {/* 4 Interaction Modes */}
+        <div className="mode-bar">
+          <span className="mode-tag">MODE:</span>
+          <div className="mode-buttons">
+            {INTERACTION_MODES.map((mode) => (
+              <button
+                key={mode.id}
+                className={`mode-btn ${activeMode === mode.id ? 'active' : ''}`}
+                onClick={() => {
+                  stopSpeech();
+                  setActiveMode(mode.id);
+                }}
+              >
+                {mode.label}
+              </button>
             ))}
-          </select>
-          <button 
-            className={`toggle-btn ${ttsEnabled ? 'active' : ''}`}
-            onClick={() => {
-              if (ttsEnabled) stopSpeech();
-              setTtsEnabled(!ttsEnabled);
-            }}
-            title="Toggle Voice Responses"
-          >
-            {ttsEnabled ? '🔊 Sound On' : '🔇 Mute'}
-          </button>
+          </div>
         </div>
-      </header>
 
-      <main className="messages-area">
-        {messages.map((m, idx) => (
-          <div key={idx} className={`message-row ${m.role}`}>
-            <div className="message-bubble">
-              <div className="message-content">
-                {m.text || (isStreaming && idx === messages.length - 1 ? (
-                  <span className="cursor-blink">▍</span>
-                ) : '')}
+        {/* Live Status Strip */}
+        <div className="status-bar">
+          <div className="status-indicator">
+            <span className={`pulse-circle ${isListening ? 'listening' : ''}`}></span>
+            <span>
+              {isListening ? `Listening in ${activeLangConfig.label}...` : `Active: ${currentMode.label}`}
+            </span>
+          </div>
+          {transcript && <span className="live-transcript">"{transcript}"</span>}
+        </div>
+
+        {/* Message Feed */}
+        <main className="chat-window">
+          {messages.map((m, idx) => (
+            <div key={idx} className={`message-item ${m.role}`}>
+              <div className="bubble">
+                <div className="text-content">
+                  {m.text || (isStreaming && idx === messages.length - 1 ? (
+                    <span className="typing-cursor">▍</span>
+                  ) : '')}
+                </div>
+                {m.role === 'assistant' && m.text && (
+                  <button 
+                    className="listen-btn"
+                    onClick={() => speakText(m.text, selectedLang)}
+                    title="Speak message aloud"
+                  >
+                    🗣️
+                  </button>
+                )}
               </div>
-              {m.role === 'assistant' && m.text && (
-                <button 
-                  className="replay-speech-btn"
-                  onClick={() => speakText(m.text, selectedLang)}
-                  title="Speak again"
-                >
-                  🗣️
-                </button>
-              )}
             </div>
-          </div>
-        ))}
-        {isStreaming && (
-          <div className="streaming-indicator">
-            <span>Generating response...</span>
-          </div>
-        )}
-        <div ref={messagesEndRef} />
-      </main>
+          ))}
+          <div ref={messagesEndRef} />
+        </main>
 
-      <footer className="input-area">
-        <button 
-          className={`mic-btn ${isListening ? 'listening' : ''}`}
-          onClick={isListening ? stopListening : startListening}
-          title={isListening ? 'Listening... click to stop' : 'Click to speak'}
-        >
-          {isListening ? '🛑' : '🎙️'}
-        </button>
+        {/* Input Dock */}
+        <footer className="input-dock">
+          {(currentMode.input === 'voice' || activeMode === 'S2S' || activeMode === 'S2T') && (
+            <button 
+              type="button"
+              className={`mic-toggle ${isListening ? 'active' : ''}`}
+              onClick={isListening ? stopListening : startListening}
+              title={isListening ? 'Stop mic' : 'Start mic'}
+            >
+              {isListening ? '🛑' : '🎙️'}
+            </button>
+          )}
 
-        <input 
-          type="text" 
-          placeholder={isListening ? "Listening to your voice..." : "योजना या छात्रवृत्ति के बारे में पूछें..."}
-          value={inputQuery}
-          onChange={(e) => setInputQuery(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleSendMessageStream()}
-        />
+          <input 
+            type="text" 
+            className="text-entry"
+            placeholder={
+              isListening 
+                ? "Listening to voice..." 
+                : currentMode.input === 'voice' 
+                  ? "Click microphone or type query..." 
+                  : "योजना या छात्रवृत्ति के बारे में पूछें..."
+            }
+            value={inputQuery}
+            onChange={(e) => setInputQuery(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSendMessageStream()}
+          />
 
-        <button 
-          className="send-btn" 
-          onClick={() => handleSendMessageStream()}
-          disabled={isStreaming || !inputQuery.trim()}
-        >
-          {isStreaming ? 'Streaming...' : 'Send'}
-        </button>
-      </footer>
+          <button 
+            type="button"
+            className="action-send" 
+            onClick={() => handleSendMessageStream()}
+            disabled={isStreaming || !inputQuery.trim()}
+          >
+            {isStreaming ? '...' : 'Send'}
+          </button>
+        </footer>
+      </div>
     </div>
   );
 }
