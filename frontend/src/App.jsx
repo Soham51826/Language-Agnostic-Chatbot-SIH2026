@@ -59,7 +59,8 @@ export default function App() {
     try {
       console.log(`[VaniSetu] Sending: "${textToSend}" in lang: ${currentLangObj.apiCode}, mode: ${currentModeId}`);
       
-      const response = await fetch('http://localhost:8000/api/chat/stream', {
+      const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'https://vanisetu-backend-language-agnostic.onrender.com';
+const response = await fetch(`${API_BASE_URL}/api/chat/stream`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
