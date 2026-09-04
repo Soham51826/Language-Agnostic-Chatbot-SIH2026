@@ -1,19 +1,20 @@
+import os
 import json
+import asyncio
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field
-from typing import Optional
+from pydantic import BaseModel
+from dotenv import load_dotenv
 
-from ai_engine import generate_response, generate_response_stream
+# Import your AI engine logic
+from ai_engine import get_ai_response_stream
 
-app = FastAPI(
-    title="VaniSetu API",
-    description="Multilingual Voice & Text RAG Backend for SIH 2026",
-    version="2.0.0"
-)
+load_dotenv()
 
-# CORS Configuration
+app = FastAPI(title="VaniSetu Multilingual Assistant API")
+
+# Allow unrestricted CORS for production Vercel frontend and local testing
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -23,50 +24,42 @@ app.add_middleware(
 )
 
 class ChatRequest(BaseModel):
-    query: str = Field(..., min_length=1, description="User's query string")
-    language: str = Field(default="hi", description="Language code: hi, mr, gu, en")
-    session_id: Optional[str] = Field(default="default_session")
-    mode: Optional[str] = Field(default="S2S", description="One of: T2T, S2S, T2S, S2T")
+    message: str
+    language: str = "hi"
+    mode: str = "text-text"
 
 @app.get("/")
-def health_check():
-    return {"status": "active", "service": "VaniSetu Multilingual Assistant"}
-
-@app.post("/api/chat")
-async def chat_endpoint(request: ChatRequest):
-    try:
-        response_text = await generate_response(
-            query=request.query, 
-            language=request.language, 
-            mode=request.mode
-        )
-        return {
-            "success": True,
-            "response_text": response_text,
-            "language": request.language,
-            "mode": request.mode
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+async def root():
+    return {
+        "status": "active",
+        "service": "VaniSetu Multilingual Assistant"
+    }
 
 @app.post("/api/chat/stream")
 async def chat_stream_endpoint(request: ChatRequest):
-    async def sse_event_generator():
+    if not request.message or not request.message.strip():
+        raise HTTPException(status_code=400, detail="Message cannot be empty.")
+
+    async def event_generator():
         try:
-            async for token in generate_response_stream(
-                query=request.query, 
-                language=request.language, 
+            # Yield chunks directly from the ai_engine generator
+            for chunk in get_ai_response_stream(
+                prompt=request.message,
+                language=request.language,
                 mode=request.mode
             ):
-                payload = json.dumps({"delta": token})
-                yield f"data: {payload}\n\n"
+                if chunk:
+                    yield f"data: {json.dumps({'text': chunk})}\n\n"
+                    await asyncio.sleep(0.01)
+            
+            # Send standard SSE terminal signal
             yield "data: [DONE]\n\n"
         except Exception as e:
-            err_payload = json.dumps({"error": str(e)})
-            yield f"data: {err_payload}\n\n"
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+            yield "data: [DONE]\n\n"
 
     return StreamingResponse(
-        sse_event_generator(),
+        event_generator(),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
@@ -74,3 +67,7 @@ async def chat_stream_endpoint(request: ChatRequest):
             "X-Accel-Buffering": "no"
         }
     )
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
