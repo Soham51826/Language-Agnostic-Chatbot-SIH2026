@@ -21,17 +21,28 @@ export default function App() {
   const [isStreaming, setIsStreaming] = useState(false);
   const messagesEndRef = useRef(null);
 
-  const currentMode = INTERACTION_MODES.find(m => m.id === activeMode) || INTERACTION_MODES[0];
-  const activeLangConfig = SUPPORTED_LANGUAGES.find(l => l.code === selectedLang) || SUPPORTED_LANGUAGES[0];
+  // Synchronous refs to prevent stale closure bugs in async callbacks
+  const activeModeRef = useRef(activeMode);
+  const selectedLangRef = useRef(selectedLang);
+  const isStreamingRef = useRef(isStreaming);
+
+  useEffect(() => { activeModeRef.current = activeMode; }, [activeMode]);
+  useEffect(() => { selectedLangRef.current = selectedLang; }, [selectedLang]);
+  useEffect(() => { isStreamingRef.current = isStreaming; }, [isStreaming]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isStreaming]);
 
-  // Core streaming query handler with mode-aware audio execution
+  // Core stream handler
   const handleSendMessageStream = async (queryText) => {
     const textToSend = (queryText !== undefined && queryText !== null ? queryText : inputQuery).trim();
-    if (!textToSend || isStreaming) return;
+    if (!textToSend || isStreamingRef.current) return;
+
+    const currentLangCode = selectedLangRef.current;
+    const currentModeId = activeModeRef.current;
+    const currentModeObj = INTERACTION_MODES.find(m => m.id === currentModeId) || INTERACTION_MODES[0];
+    const currentLangObj = SUPPORTED_LANGUAGES.find(l => l.code === currentLangCode) || SUPPORTED_LANGUAGES[0];
 
     stopSpeech();
     setInputQuery('');
@@ -46,18 +57,22 @@ export default function App() {
     let accumulatedText = '';
 
     try {
+      console.log(`[VaniSetu] Sending: "${textToSend}" in lang: ${currentLangObj.apiCode}, mode: ${currentModeId}`);
+      
       const response = await fetch('http://localhost:8000/api/chat/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query: textToSend,
-          language: activeLangConfig.apiCode,
-          session_id: 'unified_vanisetu_session',
-          mode: activeMode
+          language: currentLangObj.apiCode,
+          session_id: 'vanisetu_session',
+          mode: currentModeId
         })
       });
 
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      if (!response.ok) {
+        throw new Error(`HTTP Error ${response.status}`);
+      }
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder('utf-8');
@@ -69,16 +84,16 @@ export default function App() {
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n\n');
-        buffer = lines.pop();
+        buffer = lines.pop() || '';
 
         for (const line of lines) {
           if (line.startsWith('data: ')) {
             const dataStr = line.replace('data: ', '').trim();
 
             if (dataStr === '[DONE]') {
-              // Trigger TTS speech only if current mode specifies voice output
-              if (currentMode.output === 'voice' && accumulatedText) {
-                speakText(accumulatedText, selectedLang);
+              console.log('[VaniSetu] Stream finished.');
+              if (currentModeObj.output === 'voice' && accumulatedText) {
+                speakText(accumulatedText, currentLangCode);
               }
               break;
             }
@@ -95,20 +110,28 @@ export default function App() {
                   };
                   return updated;
                 });
+              } else if (parsed.error) {
+                console.error('[VaniSetu Backend Error]:', parsed.error);
+                accumulatedText = `⚠️ Error: ${parsed.error}`;
+                setMessages(prev => {
+                  const updated = [...prev];
+                  updated[updated.length - 1] = { role: 'assistant', text: accumulatedText };
+                  return updated;
+                });
               }
-            } catch (e) {
-              console.error('Failed to parse stream packet:', e);
+            } catch (err) {
+              console.warn('Parsing line failed:', line);
             }
           }
         }
       }
     } catch (err) {
-      console.error('SSE connection error:', err);
+      console.error('[VaniSetu Request Failed]:', err);
       setMessages(prev => {
         const updated = [...prev];
         updated[updated.length - 1] = {
           role: 'assistant',
-          text: '⚠️ सर्वर से कनेक्ट करने में असमर्थ। कृपया सुनिश्चित करें कि FastAPI चल रहा है।'
+          text: '⚠️ सर्वर से कनेक्ट करने में असमर्थ। कृपया जांचें कि बैकएंड टर्मिनल (FastAPI) चल रहा है या नहीं।'
         };
         return updated;
       });
@@ -117,21 +140,23 @@ export default function App() {
     }
   };
 
-  // Connect microphone voice recognition
   const { isListening, transcript, startListening, stopListening } = useSpeechRecognition(
     selectedLang,
-    (spokenTranscript) => {
-      if (spokenTranscript && spokenTranscript.trim()) {
-        setInputQuery(spokenTranscript);
-        handleSendMessageStream(spokenTranscript.trim());
+    (spokenText) => {
+      console.log('[Speech Recognition Finished]:', spokenText);
+      if (spokenText && spokenText.trim()) {
+        handleSendMessageStream(spokenText.trim());
       }
     }
   );
 
+  const activeLangConfig = SUPPORTED_LANGUAGES.find(l => l.code === selectedLang) || SUPPORTED_LANGUAGES[0];
+  const currentMode = INTERACTION_MODES.find(m => m.id === activeMode) || INTERACTION_MODES[0];
+
   return (
     <div className="app-wrapper">
       <div className="chat-card">
-        {/* Top Header */}
+        {/* Header */}
         <header className="app-header">
           <div className="brand-section">
             <h1>वाणीसेतु (VaniSetu)</h1>
@@ -154,7 +179,6 @@ export default function App() {
               type="button" 
               className="stop-audio-btn" 
               onClick={stopSpeech}
-              title="Stop Audio Playback"
             >
               ⏹️ Stop Audio
             </button>
@@ -191,7 +215,7 @@ export default function App() {
           {transcript && <span className="live-transcript">"{transcript}"</span>}
         </div>
 
-        {/* Message Feed */}
+        {/* Message Window */}
         <main className="chat-window">
           {messages.map((m, idx) => (
             <div key={idx} className={`message-item ${m.role}`}>
@@ -203,9 +227,10 @@ export default function App() {
                 </div>
                 {m.role === 'assistant' && m.text && (
                   <button 
+                    type="button"
                     className="listen-btn"
                     onClick={() => speakText(m.text, selectedLang)}
-                    title="Speak message aloud"
+                    title="Speak aloud"
                   >
                     🗣️
                   </button>
@@ -216,14 +241,14 @@ export default function App() {
           <div ref={messagesEndRef} />
         </main>
 
-        {/* Input Dock */}
+        {/* Input Footer */}
         <footer className="input-dock">
           {(currentMode.input === 'voice' || activeMode === 'S2S' || activeMode === 'S2T') && (
             <button 
               type="button"
               className={`mic-toggle ${isListening ? 'active' : ''}`}
               onClick={isListening ? stopListening : startListening}
-              title={isListening ? 'Stop mic' : 'Start mic'}
+              title={isListening ? 'Stop recording' : 'Start speaking'}
             >
               {isListening ? '🛑' : '🎙️'}
             </button>
@@ -234,9 +259,9 @@ export default function App() {
             className="text-entry"
             placeholder={
               isListening 
-                ? "Listening to voice..." 
+                ? "Listening... speak now" 
                 : currentMode.input === 'voice' 
-                  ? "Click microphone or type query..." 
+                  ? "Click microphone to speak (or type here)..." 
                   : "योजना या छात्रवृत्ति के बारे में पूछें..."
             }
             value={inputQuery}

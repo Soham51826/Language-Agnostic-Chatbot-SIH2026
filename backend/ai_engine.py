@@ -10,11 +10,12 @@ load_dotenv()
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 if not GEMINI_API_KEY:
-    raise ValueError("GEMINI_API_KEY environment variable is missing.")
+    raise ValueError("GEMINI_API_KEY environment variable is missing. Check your .env file.")
 
+# Initialize the Google GenAI client
 client = genai.Client(api_key=GEMINI_API_KEY)
 
-# Load Knowledge Base
+# Load Ground Truth Knowledge Base
 KB_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "knowledge_base.json")
 try:
     with open(KB_PATH, "r", encoding="utf-8") as f:
@@ -32,18 +33,18 @@ def build_system_instruction(target_lang: str, mode: str = "S2S") -> str:
     }
     lang_name = lang_map.get(target_lang, "Hindi")
 
-    voice_mode_rules = ""
+    # Mode-specific output formatting constraints
     if mode in ["S2S", "T2S"]:
         voice_mode_rules = """
-- MODE IS SPEECH-OUTPUT: The user will LISTEN to your output via Text-to-Speech.
-- DO NOT use markdown headers, asterisks, bullet dashes, or raw URLs.
-- Keep sentences short, conversational, and direct so speech synthesis sounds natural.
-- Avoid brackets and special characters.
+- MODE IS SPEECH-OUTPUT: The user will LISTEN to your output via Text-to-Speech synthesis.
+- DO NOT use markdown headers, asterisks, hash symbols, bullet points, brackets, or raw URLs.
+- Keep sentences concise, conversational, and direct so speech synthesis sounds natural and clear.
+- Do not announce markdown formatting or use special characters.
 """
     else:
         voice_mode_rules = """
 - MODE IS TEXT-OUTPUT: The user will READ your output on screen.
-- Use clear bullet points, bold key requirements, and structured lists for readability.
+- Use clear markdown bullet points, bold key eligibility numbers, and structured lists for scannability.
 """
 
     return f"""
@@ -56,9 +57,10 @@ GROUND TRUTH SCHEMES DATA:
 {json.dumps(KNOWLEDGE_BASE, ensure_ascii=False, indent=2)}
 
 STRICT GUARDRAILS:
-1. Rely ONLY on the verified schemes provided above.
-2. If the user asks about an unknown scheme or fake scheme, explicitly decline in {lang_name} and advise them to visit the official Rajasthan portal (hte.rajasthan.gov.in) or their District Education Office.
-3. Handle colloquial or Romanized transliterations (Hinglish/Marathlish) naturally by detecting the intent and responding in {lang_name}.
+1. GREETINGS: For casual greetings (such as "Hello", "Hi", "नमस्ते", "नमस्कार", "કેમ છો"), respond warmly and introduce yourself as VaniSetu, inviting them to ask about Rajasthan higher education schemes and scholarships.
+2. SCHEME QUERIES: Rely ONLY on the verified schemes provided above for specific scheme eligibility, criteria, and benefits.
+3. ZERO-HALLUCINATION: If the user asks about an unknown, unverified, or fake scheme, explicitly decline in {lang_name} and advise them to consult the official portal (hte.rajasthan.gov.in) or their District Education Office.
+4. TRANSLITERATION & DIALECTS: Handle colloquial or Romanized inputs (such as Hinglish, Marathlish, or Gujlish) by detecting the underlying semantic intent and replying fluently in {lang_name}.
 {voice_mode_rules}
 """
 
