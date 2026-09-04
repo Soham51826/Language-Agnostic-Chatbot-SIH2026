@@ -13,7 +13,7 @@ app = FastAPI(
     version="2.0.0"
 )
 
-# CORS Configuration
+# Unrestricted CORS for local and cloud production origins
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -23,7 +23,7 @@ app.add_middleware(
 )
 
 class ChatRequest(BaseModel):
-    query: str = Field(..., min_length=1, description="User's query string")
+    query: str = Field(..., min_length=1, description="User query string")
     language: str = Field(default="hi", description="Language code: hi, mr, gu, en")
     session_id: Optional[str] = Field(default="default_session")
     mode: Optional[str] = Field(default="S2S", description="One of: T2T, S2S, T2S, S2T")
@@ -74,3 +74,7 @@ async def chat_stream_endpoint(request: ChatRequest):
             "X-Accel-Buffering": "no"
         }
     )
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)

@@ -21,7 +21,6 @@ export default function App() {
   const [isStreaming, setIsStreaming] = useState(false);
   const messagesEndRef = useRef(null);
 
-  // Synchronous refs to prevent stale closure bugs in async callbacks
   const activeModeRef = useRef(activeMode);
   const selectedLangRef = useRef(selectedLang);
   const isStreamingRef = useRef(isStreaming);
@@ -34,7 +33,6 @@ export default function App() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isStreaming]);
 
-  // Core stream handler
   const handleSendMessageStream = async (queryText) => {
     const textToSend = (queryText !== undefined && queryText !== null ? queryText : inputQuery).trim();
     if (!textToSend || isStreamingRef.current) return;
@@ -60,7 +58,7 @@ export default function App() {
       console.log(`[VaniSetu] Sending: "${textToSend}" in lang: ${currentLangObj.apiCode}, mode: ${currentModeId}`);
       
       const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'https://vanisetu-backend-language-agnostic.onrender.com';
-const response = await fetch(`${API_BASE_URL}/api/chat/stream`, {
+      const response = await fetch(`${API_BASE_URL}/api/chat/stream`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -132,7 +130,7 @@ const response = await fetch(`${API_BASE_URL}/api/chat/stream`, {
         const updated = [...prev];
         updated[updated.length - 1] = {
           role: 'assistant',
-          text: '⚠️ सर्वर से कनेक्ट करने में असमर्थ। कृपया जांचें कि बैकएंड टर्मिनल (FastAPI) चल रहा है या नहीं।'
+          text: '⚠️ सर्वर से कनेक्ट करने में असमर्थ। कृपया जांचें कि बैकएंड चल रहा है या नहीं।'
         };
         return updated;
       });
@@ -228,7 +226,7 @@ const response = await fetch(`${API_BASE_URL}/api/chat/stream`, {
                 </div>
                 {m.role === 'assistant' && m.text && (
                   <button 
-                    type="button"
+                    type="button" 
                     className="listen-btn"
                     onClick={() => speakText(m.text, selectedLang)}
                     title="Speak aloud"
@@ -246,7 +244,7 @@ const response = await fetch(`${API_BASE_URL}/api/chat/stream`, {
         <footer className="input-dock">
           {(currentMode.input === 'voice' || activeMode === 'S2S' || activeMode === 'S2T') && (
             <button 
-              type="button"
+              type="button" 
               className={`mic-toggle ${isListening ? 'active' : ''}`}
               onClick={isListening ? stopListening : startListening}
               title={isListening ? 'Stop recording' : 'Start speaking'}
@@ -271,7 +269,7 @@ const response = await fetch(`${API_BASE_URL}/api/chat/stream`, {
           />
 
           <button 
-            type="button"
+            type="button" 
             className="action-send" 
             onClick={() => handleSendMessageStream()}
             disabled={isStreaming || !inputQuery.trim()}

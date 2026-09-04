@@ -8,11 +8,11 @@ from google.genai import types
 
 load_dotenv()
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip().strip('"').strip("'")
 if not GEMINI_API_KEY:
-    raise ValueError("GEMINI_API_KEY environment variable is missing. Check your .env file.")
+    raise ValueError("GEMINI_API_KEY environment variable is missing or empty. Check your .env file.")
 
-# Initialize the Google GenAI client
+# Explicitly initialize the Google GenAI client
 client = genai.Client(api_key=GEMINI_API_KEY)
 
 # Load Ground Truth Knowledge Base
@@ -33,18 +33,17 @@ def build_system_instruction(target_lang: str, mode: str = "S2S") -> str:
     }
     lang_name = lang_map.get(target_lang, "Hindi")
 
-    # Mode-specific output formatting constraints
     if mode in ["S2S", "T2S"]:
         voice_mode_rules = """
 - MODE IS SPEECH-OUTPUT: The user will LISTEN to your output via Text-to-Speech synthesis.
 - DO NOT use markdown headers, asterisks, hash symbols, bullet points, brackets, or raw URLs.
 - Keep sentences concise, conversational, and direct so speech synthesis sounds natural and clear.
-- Do not announce markdown formatting or use special characters.
+- Do not announce formatting or special characters.
 """
     else:
         voice_mode_rules = """
 - MODE IS TEXT-OUTPUT: The user will READ your output on screen.
-- Use clear markdown bullet points, bold key eligibility numbers, and structured lists for scannability.
+- Use clean formatting, bold key eligibility numbers, and structured lists for scannability.
 """
 
     return f"""
@@ -67,7 +66,7 @@ STRICT GUARDRAILS:
 async def generate_response(query: str, language: str = "hi", mode: str = "S2S") -> str:
     system_prompt = build_system_instruction(language, mode)
     response = client.models.generate_content(
-        model="gemini-2.5-flash",
+        model="gemini-2.0-flash",
         contents=query,
         config=types.GenerateContentConfig(
             system_instruction=system_prompt,
@@ -79,7 +78,7 @@ async def generate_response(query: str, language: str = "hi", mode: str = "S2S")
 async def generate_response_stream(query: str, language: str = "hi", mode: str = "S2S") -> AsyncGenerator[str, None]:
     system_prompt = build_system_instruction(language, mode)
     response_stream = client.models.generate_content_stream(
-        model="gemini-2.5-flash",
+        model="gemini-2.0-flash",
         contents=query,
         config=types.GenerateContentConfig(
             system_instruction=system_prompt,
