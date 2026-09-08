@@ -13,7 +13,6 @@ app = FastAPI(
     version="2.0.0"
 )
 
-# Unrestricted CORS for local and cloud production origins
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

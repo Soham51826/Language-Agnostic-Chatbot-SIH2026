@@ -57,7 +57,8 @@ export default function App() {
     try {
       console.log(`[VaniSetu] Sending: "${textToSend}" in lang: ${currentLangObj.apiCode}, mode: ${currentModeId}`);
       
-     const API_BASE_URL = 'http://127.0.0.1:8000';
+      // Points directly to local FastAPI server
+      const API_BASE_URL = 'http://127.0.0.1:8000';
       const response = await fetch(`${API_BASE_URL}/api/chat/stream`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -130,7 +131,7 @@ export default function App() {
         const updated = [...prev];
         updated[updated.length - 1] = {
           role: 'assistant',
-          text: '⚠️ सर्वर से कनेक्ट करने में असमर्थ। कृपया जांचें कि बैकएंड चल रहा है या नहीं।'
+          text: '⚠️ सर्वर से कनेक्ट करने में असमर्थ। कृपया जांचें कि बैकएंड टर्मिनल (FastAPI) चल रहा है या नहीं।'
         };
         return updated;
       });
@@ -155,7 +156,6 @@ export default function App() {
   return (
     <div className="app-wrapper">
       <div className="chat-card">
-        {/* Header */}
         <header className="app-header">
           <div className="brand-section">
             <h1>वाणीसेतु (VaniSetu)</h1>
@@ -184,7 +184,6 @@ export default function App() {
           </div>
         </header>
 
-        {/* 4 Interaction Modes */}
         <div className="mode-bar">
           <span className="mode-tag">MODE:</span>
           <div className="mode-buttons">
@@ -203,7 +202,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* Live Status Strip */}
         <div className="status-bar">
           <div className="status-indicator">
             <span className={`pulse-circle ${isListening ? 'listening' : ''}`}></span>
@@ -214,7 +212,6 @@ export default function App() {
           {transcript && <span className="live-transcript">"{transcript}"</span>}
         </div>
 
-        {/* Message Window */}
         <main className="chat-window">
           {messages.map((m, idx) => (
             <div key={idx} className={`message-item ${m.role}`}>
@@ -240,7 +237,6 @@ export default function App() {
           <div ref={messagesEndRef} />
         </main>
 
-        {/* Input Footer */}
         <footer className="input-dock">
           {(currentMode.input === 'voice' || activeMode === 'S2S' || activeMode === 'S2T') && (
             <button 
