@@ -2,33 +2,157 @@
   "schemes": [
     {
       "id": "RAJ_SCH_01",
-      "name": "Mukhyamantri Uchha Shiksha Chhatravriti Yojana",
-      "state": "Rajasthan",
-      "target_group": "Undergraduate College Students",
-      "eligibility": "Minimum 60% marks in Class 12 board exams, family annual income below INR 2.5 Lakhs.",
-      "benefits": "INR 500 per month (up to INR 5,000 annually) for up to 5 years.",
-      "application_portal": "https://hte.rajasthan.gov.in or SSO Rajasthan Portal",
-      "required_documents": ["[Aadhaar Redacted] / Jan Aadhaar Card", "Class 12 Marksheet", "Income Certificate", "Bank Passbook"]
+      "scheme_name": "Mukhyamantri Uchha Shiksha Chhatravriti Yojana",
+      "scheme_name_hi": "मुख्यमंत्री उच्च शिक्षा छात्रवृत्ति योजना",
+      "target_category": "Meritorious College / University Undergraduates (General, EWS, OBC, SC, ST)",
+      "eligibility": "Must be a permanent resident of Rajasthan. Passed Class 12 board examination (RBSE or recognized) with minimum 60% marks and ranked within the first 1,00,000 students in the board merit. Annual family income from all sources must not exceed INR 2,50,000 (2.5 Lakhs). Must be enrolled in a regular higher education course.",
+      "benefit": "INR 500 per month (total INR 5,000 per academic year for 10 months) for regular degree courses up to 5 years (UG and PG). Specially-abled students receive INR 1,000 per month (INR 10,000 per year).",
+      "portal_url": "https://hte.rajasthan.gov.in",
+      "key_deadlines": "Annual application window opens between July and October; renewal applications required annually through SSO portal.",
+      "required_documents": [
+        "Jan Aadhaar Card / Aadhaar Card",
+        "Class 12 Marksheet (minimum 60%)",
+        "Family Income Certificate (below 2.5 Lakhs)",
+        "Bonafide Rajasthan Domicile Certificate",
+        "College Admission Fee Receipt & Student ID",
+        "Active Bank Account Passbook seeded with Jan Aadhaar"
+      ],
+      "keywords": [
+        "uchha shiksha", "12th pass", "scholarship", "higher education", "60 percent", "5000 rupees", 
+        "मुख्यमंत्री उच्च शिक्षा", "१२वीं पास", "छात्रवृत्ति", "कॉलेज स्कॉलरशिप", 
+        "उच्च शिक्षण", "शिष्यवृत्ती", "उચ્ચ શિક્ષણ"
+      ]
     },
     {
       "id": "RAJ_SCH_02",
-      "name": "Devnarayan Chhatra Scooty Vitran Evam Protsahan Rashi Yojana",
-      "state": "Rajasthan",
-      "target_group": "Girl students from backward classes (MBC)",
-      "eligibility": "Girls passing Class 12 with at least 50% marks enrolled in state degree colleges.",
-      "benefits": "Free motorized scooty or annual incentive payment up to graduation/post-graduation.",
-      "application_portal": "SSO Rajasthan Portal",
-      "required_documents": ["Jan Aadhaar Card", "Caste Certificate", "Class 12 Certificate", "College Fee Receipt"]
+      "scheme_name": "Kalibai Bheel Medhavi Chhatra Scooty Vitran Yojana",
+      "scheme_name_hi": "कालीबाई भील मेधावी छात्रा स्कूटी वितरण योजना",
+      "target_category": "Meritorious Girl Students (SC, ST, OBC, General/EWS, Minorities)",
+      "eligibility": "Female students who are bonafide residents of Rajasthan. Must have secured at least 65% marks in Class 12 from RBSE (Rajasthan Board) or at least 75% marks in CBSE. Must be enrolled in regular undergraduate degree courses in recognized colleges in Rajasthan without educational gap. Annual family income must be under INR 2.5 Lakhs.",
+      "benefit": "Free motorized scooty (two-wheeler) equipped with helmet, 2 liters of petrol, five-year third-party insurance, and registration charges covered. For differently-abled girl students, motorized tricycles or an equivalent cash grant of INR 40,000 is offered.",
+      "portal_url": "https://hte.rajasthan.gov.in",
+      "key_deadlines": "Applications invited between August and November annually via Rajasthan SSO Higher Education portal.",
+      "required_documents": [
+        "Jan Aadhaar Card",
+        "Class 12 Marksheet (RBSE ≥65%, CBSE ≥75%)",
+        "Regular College Admission Confirmation",
+        "Caste & Category Certificate",
+        "Annual Income Affidavit (< 2.5 Lakh)",
+        "Valid Driving License / Learner Permit (or undertaking)"
+      ],
+      "keywords": [
+        "kalibai", "scooty", "girls scooty", "medhavi chhatra", "scooty yojana", 
+        "कालीबाई भील", "स्कूटी योजना", "मेधावी छात्रा", "फ्री स्कूटी", 
+        "स्कूटी", "સ્કૂટી યોજના", "ગર્લ્સ સ્કૂટી"
+      ]
     },
     {
       "id": "RAJ_SCH_03",
-      "name": "Rajasthan Free Tablet Yojana (Shiksha Vibhag)",
-      "state": "Rajasthan",
-      "target_group": "Meritorious Class 8, 10, and 12 Students",
-      "eligibility": "Top merit rank holders in Rajasthan Board of Secondary Education (RBSE).",
-      "benefits": "Free Smart Tablet with 3 years of complimentary internet connectivity.",
-      "application_portal": "Direct departmental allocation via school headmaster/principal.",
-      "required_documents": ["School ID", "RBSE Board Roll Number", "Jan Aadhaar Card"]
+      "scheme_name": "Devnarayan Chhatra Scooty Vitran Evam Protsahan Rashi Yojana",
+      "scheme_name_hi": "देवनारायण छात्रा स्कूटी वितरण एवं प्रोत्साहन राशि योजना",
+      "target_category": "Meritorious Girl Students belonging to Most Backward Classes (MBC - Gurjar, Raika, Rebari, Banjara, Gadia Luhar, Gadariya)",
+      "eligibility": "Girl students of Rajasthan MBC communities. Passed Class 12 board exams with at least 50% marks. Admitted to first year of regular degree program (BA, BSc, BCom, BTech, MBBS, etc.). Family annual income should not exceed INR 2,50,000.",
+      "benefit": "Merit-selected candidates receive a free motorized Scooty with accessories and insurance. Alternatively, eligible students who do not receive a scooty receive financial incentive: INR 10,000/year during graduation, and INR 20,000/year during post-graduation (MA, MSc, MCom).",
+      "portal_url": "https://hte.rajasthan.gov.in",
+      "key_deadlines": "Applications active July to October; evaluated strictly by Department of Higher Education Rajasthan.",
+      "required_documents": [
+        "MBC Caste Certificate (Gurjar, Raika, Banjara, etc.)",
+        "Class 12 Passing Certificate with ≥ 50%",
+        "College Admission Fee Receipt",
+        "Jan Aadhaar Card & Rajasthan Domicile",
+        "Income Certificate"
+      ],
+      "keywords": [
+        "devnarayan", "mbc scooty", "gurjar", "rebari", "raika", "protsahan rashi", 
+        "देवनारायण", "एमबीसी स्कूटी", "गुर्जर", "प्रोत्साहन राशि", 
+        "देवनारायण योजना", "દેવનારાયણ યોજના"
+      ]
+    },
+    {
+      "id": "RAJ_SCH_04",
+      "scheme_name": "Rajasthan Post-Matric Scholarship Scheme (Uttar Matric Chhatravriti)",
+      "scheme_name_hi": "राजस्थान उत्तर मैट्रिक छात्रवृत्ति योजना (सामाजिक न्याय एवं अधिकारिता विभाग)",
+      "target_category": "Post-secondary students belonging to SC, ST, SBC, OBC, EWS, and Specially Abled categories",
+      "eligibility": "Permanent resident of Rajasthan studying in Class 11, 12, ITI, Polytechnic, Diploma, UG, PG, or Professional courses (Engineering, Medical, Law) in recognized institutions. Annual family income limits: SC/ST up to INR 2.5 Lakhs; OBC/EWS up to INR 1.5 Lakhs (with specific deprivation criteria like BPL, Antyodaya, or single mother).",
+      "benefit": "Complete 100% reimbursement of non-refundable tuition and institutional fees, plus a monthly maintenance allowance ranging from INR 550 to INR 1,200 per month depending on whether the student is a hosteller or day-scholar.",
+      "portal_url": "https://sjms.rajasthan.gov.in",
+      "key_deadlines": "Portal opens annually from August to December; institute verification by January.",
+      "required_documents": [
+        "Jan Aadhaar Card & Bio-metric verification",
+        "Previous Class Passed Marksheet",
+        "Original Fee Receipts with Breakdown",
+        "Competent Authority Caste Certificate",
+        "Income Certificate in prescribed Government Format",
+        "Hostel Certificate (if applicable)"
+      ],
+      "keywords": [
+        "post matric", "uttar matric", "sc st scholarship", "fee reimbursement", "sjms", 
+        "उत्तर मैट्रिक", "फीस प्रतिपूर्ति", "एससी एसटी छात्रवृत्ति", "ओबीसी स्कॉलरशिप", 
+        "पोस्ट मॅट्रिक", "ઉત્તર મેટ્રિક શિષ્યવૃત્તિ"
+      ]
+    },
+    {
+      "id": "RAJ_SCH_05",
+      "scheme_name": "Mukhyamantri Anupriti Coaching Yojana",
+      "scheme_name_hi": "मुख्यमंत्री अनुप्रति कोचिंग योजना",
+      "target_category": "Aspirants from SC, ST, OBC, MBC, EWS, Minorities, and Specially Abled Categories preparing for competitive exams",
+      "eligibility": "Domiciled in Rajasthan. Family annual income less than INR 8,00,000 (8 Lakhs) or candidate's parent working in Rajasthan Govt in Pay Matrix Level-11. Minimum qualifying marks: 60% in 12th/Graduation (varies by targeted exam). Targeted exams include UPSC Civil Services, RPSC RAS, REET, NEET, IIT-JEE, CLAT, CA-FC, CS, and Banking/SSC exams.",
+      "benefit": "100% free coaching at top empanelled coaching institutes across Jaipur, Kota, Jodhpur, and other major hubs. Additionally, an annual accommodation & lodging allowance of INR 40,000 is directly transferred to candidates preparing outside their home district.",
+      "portal_url": "https://sso.rajasthan.gov.in (SJMS Coaching Portal)",
+      "key_deadlines": "Two rounds per fiscal year: Phase 1 in June–July and Phase 2 in August–September.",
+      "required_documents": [
+        "Jan Aadhaar Card",
+        "Class 10 and 12 Board Marksheets",
+        "Graduation Marksheet (for RAS/UPSC exams)",
+        "Caste and Income Verification Certificate",
+        "Proof of admission in empanelled coaching institute"
+      ],
+      "keywords": [
+        "anupriti", "free coaching", "neet coaching", "iit coaching", "upsc ras coaching", "40000 stipend", 
+        "अनुप्रति कोचिंग", "मुफ्त कोचिंग", "आईआईटी नीट कोचिंग", "आरएएस", "यूपीएससी", 
+        "मोफत कोचिंग", "અનુપ્રતિ કોચિંગ યોજના"
+      ]
+    },
+    {
+      "id": "RAJ_SCH_06",
+      "scheme_name": "Rajasthan Free Tablet Yojana (School Shiksha Vibhag)",
+      "scheme_name_hi": "राजस्थान मुफ्त टैबलेट योजना (स्कूल शिक्षा विभाग)",
+      "target_category": "Meritorious School Students of Class 8, 10, and 12 Board Examinations",
+      "eligibility": "Students studying in Rajasthan Government or RBSE affiliated schools who secured top merit ranks in the Class 8, Class 10, and Class 12 board examinations across the state.",
+      "benefit": "Complimentary high-performance 4G/5G smart tablet pre-loaded with digital syllabus and e-learning resources, along with 3 years of free high-speed internet data connectivity via SIM card.",
+      "portal_url": "https://rajshaladarpan.nic.in",
+      "key_deadlines": "No separate application form needed by students; merit lists are verified and tablets delivered directly via school principals and District Education Officers (DEO).",
+      "required_documents": [
+        "School Admission & Scholar Register Number",
+        "RBSE Board Examination Roll Number & Marksheet",
+        "Jan Aadhaar Card for identity verification"
+      ],
+      "keywords": [
+        "free tablet", "tablet yojana", "board topper", "shala darpan", "rbse tablet", 
+        "मुफ्त टैबलेट", "टैबलेट योजना", "शाला दर्पण", "बोर्ड टॉपर", 
+        "मोफत टॅब्लेट", "ફ્રી ટેબ્લેટ યોજના"
+      ]
+    },
+    {
+      "id": "RAJ_SCH_07",
+      "scheme_name": "Vidhwa / Parityakta Mukhyamantri Sambal Yojana (Higher Education)",
+      "scheme_name_hi": "विधवा एवं परित्यक्ता मुख्यमंत्री उच्च शिक्षा संबल योजना",
+      "target_category": "Widowed, abandoned, or divorced female students pursuing higher education in Rajasthan",
+      "eligibility": "Permanent female resident of Rajasthan who is a widow, legally divorced, or officially abandoned, enrolled in regular undergraduate or postgraduate degree courses in government or aided colleges.",
+      "benefit": "Complete refund of all college tuition and laboratory fees, along with an annual maintenance stipend of INR 5,000 to INR 10,000 to enable uninterrupted completion of higher education and employment readiness.",
+      "portal_url": "https://hte.rajasthan.gov.in",
+      "key_deadlines": "Rolling application cycle through the academic year on the HTE scholarship portal.",
+      "required_documents": [
+        "Death certificate of spouse (for widow) or legal divorce decree / abandonment certificate",
+        "Jan Aadhaar Card & Rajasthan Domicile Certificate",
+        "Current College Enrolment & Fee Receipts",
+        "Self-declaration affidavit"
+      ],
+      "keywords": [
+        "sambal", "vidhwa yojana", "divorced women scholarship", "fee exemption", "higher education grant", 
+        "संबल योजना", "विधवा छात्रवृत्ति", "परित्यक्ता", "उच्च शिक्षा संबल", 
+        "संबल योजना", "સંબલ યોજના"
+      ]
     }
   ]
 }
